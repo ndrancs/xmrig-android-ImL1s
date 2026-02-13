@@ -18,10 +18,10 @@ import com.iml1s.xmrigminer.R
 import android.os.Process as AndroidProcess
 
 /**
- * 2025 Best Practice: WorkManager 代替 Service
- * - 更好的電池優化
- * - 自動重試機制
- * - 約束條件支持 (Wi-Fi, 充電等)
+ * 2025 Best Practice: WorkManager replaces Service
+ * - Better battery optimization
+ * - Automatic retry mechanism
+ * - Constraint support (Wi-Fi, charging, etc.)
  */
 @HiltWorker
 class MiningWorker @AssistedInject constructor(
@@ -63,34 +63,34 @@ class MiningWorker @AssistedInject constructor(
         
         if (!config.isValid()) {
             val errorMsg = when {
-                config.walletAddress.isBlank() -> "錢包地址未設置"
-                config.poolUrl.isBlank() -> "礦池地址未設置"
-                config.threads <= 0 -> "線程數無效"
-                config.maxCpuUsage !in 10..100 -> "CPU使用率設置無效"
-                else -> "配置無效"
+                config.walletAddress.isBlank() -> "Wallet address not set"
+                config.poolUrl.isBlank() -> "Pool address not set"
+                config.threads <= 0 -> "Invalid thread count"
+                config.maxCpuUsage !in 10..100 -> "Invalid CPU usage setting"
+                else -> "Invalid configuration"
             }
             Timber.w("Invalid config: $errorMsg")
             throw IllegalStateException(errorMsg)
         }
 
-        // 1. 準備配置文件
+        // 1. Prepare configuration file
         Timber.i("Preparing config file...")
         val configFile = prepareConfigFile(config.toJson())
         
-        // 2. 獲取 xmrig 二進制路徑（從 native library）
+        // 2. Get xmrig binary path (from native library)
         Timber.i("Loading binary...")
         val binaryPath = copyBinary()
         
-        // 3. 驗證執行權限
+        // 3. Verify execute permissions
         setExecutable(binaryPath)
         
-        // 4. 啟動 XMRig
+        // 4. Start XMRig
         Timber.i("Starting XMRig process...")
         Timber.i("Binary: $binaryPath")
         Timber.i("Config: ${configFile.absolutePath}")
         Timber.i("Working directory: ${applicationContext.filesDir.absolutePath}")
         
-        // 使用命令行參數而不是配置文件
+        // Use command line parameters instead of configuration file
         process = ProcessBuilder(
             binaryPath,
             "-o", config.poolUrl,
@@ -100,19 +100,19 @@ class MiningWorker @AssistedInject constructor(
             "--donate-level=1",
             "--donate-over-proxy=1",
             "--no-color",
-            "--print-time=10",  // 每 10 秒輸出統計
+            "--print-time=10",  // Output statistics every 10 seconds
             "--log-file=${applicationContext.filesDir.absolutePath}/xmrig.log"
         ).apply {
             directory(applicationContext.filesDir)
             redirectErrorStream(true)
-            // 設置 LD_LIBRARY_PATH 讓系統找到 libc++_shared.so
+            // Set LD_LIBRARY_PATH so system can find libc++_shared.so
             val libPath = File(binaryPath).parent
             environment()["LD_LIBRARY_PATH"] = libPath
         }.start()
 
         Timber.i("XMRig process started")
 
-        // 5. 監聽輸出
+        // 5. Listen to output
         outputJob = CoroutineScope(Dispatchers.IO).launch {
             process?.inputStream?.bufferedReader()?.use { reader ->
                 reader.lineSequence()
@@ -124,12 +124,12 @@ class MiningWorker @AssistedInject constructor(
             }
         }
         
-        // 6. 監控 CPU 使用率
+        // 6. Monitor CPU usage
         cpuMonitorJob = CoroutineScope(Dispatchers.IO).launch {
             monitorCpuUsage()
         }
 
-        // 等待進程結束
+        // Wait for process to end
         process?.waitFor()
         Timber.i("XMRig process terminated")
     }
@@ -169,24 +169,24 @@ class MiningWorker @AssistedInject constructor(
         Timber.v("XMRig: $line")
 
         when {
-            // 解析接受的 share: "cpu accepted (1/0) diff 75000"
+            // Parse accepted share: "cpu accepted (1/0) diff 75000"
             line.contains("accepted", ignoreCase = true) -> {
                 statsRepository.incrementAccepted()
                 extractDifficulty(line)?.let { difficulty ->
                     statsRepository.updateDifficulty(difficulty)
                 }
             }
-            // 解析拒絕的 share
+            // Parse rejected share
             line.contains("rejected", ignoreCase = true) -> {
                 statsRepository.incrementRejected()
             }
-            // 解析算力: "speed 10s/60s/15m 123.4 456.7 789.0 H/s max 999.9 H/s"
+            // Parse hashrate: "speed 10s/60s/15m 123.4 456.7 789.0 H/s max 999.9 H/s"
             line.contains("speed", ignoreCase = true) -> {
                 extractHashrate(line)?.let { (h10s, h60s, h15m) ->
                     statsRepository.updateHashrate(h10s, h60s, h15m)
                 }
             }
-            // 解析難度: "new job from pool diff 75000"  
+            // Parse difficulty: "new job from pool diff 75000"  
             line.contains("diff", ignoreCase = true) && line.contains("job", ignoreCase = true) -> {
                 extractDifficulty(line)?.let { difficulty ->
                     statsRepository.updateDifficulty(difficulty)
@@ -211,7 +211,7 @@ class MiningWorker @AssistedInject constructor(
     }
 
     private fun extractDifficulty(line: String): Long? {
-        // 匹配 "diff 75000" 或 "diff 76680"
+        // Match "diff 75000" or "diff 76680"
         val regex = """diff\s+(\d+)""".toRegex()
         return regex.find(line)?.groupValues?.get(1)?.toLongOrNull()?.also { difficulty ->
             Timber.d("Extracted difficulty: $difficulty from line: $line")
@@ -225,7 +225,7 @@ class MiningWorker @AssistedInject constructor(
         
         while (currentCoroutineContext().isActive && isProcessAlive(process)) {
             try {
-                // 讀取 /proc/[pid]/stat 取得 CPU 時間（這個應該是可讀的）
+                // Read /proc/[pid]/stat to get CPU time (this should be readable)
                 val statFile = File("/proc/$pid/stat")
                 if (statFile.exists() && statFile.canRead()) {
                     val stat = statFile.readText().split(" ")
@@ -233,7 +233,7 @@ class MiningWorker @AssistedInject constructor(
                     val stime = stat[14].toLong()  // kernel mode time
                     val currentCpuTime = utime + stime
                     
-                    // 使用實際時間而不是系統 CPU 時間
+                    // Use actual elapsed time instead of system CPU time
                     val currentWallTime = System.currentTimeMillis()
                     
                     if (lastCpuTime > 0 && lastWallTime > 0) {
@@ -241,14 +241,14 @@ class MiningWorker @AssistedInject constructor(
                         val wallTimeDelta = currentWallTime - lastWallTime
                         
                         if (wallTimeDelta > 0) {
-                            // CPU 時間是以 clock ticks 為單位，通常是 1/100 秒
-                            // 轉換為毫秒：cpuTimeDelta * 10
+                            // CPU time is in clock ticks, typically 1/100 second
+                            // Convert to milliseconds: cpuTimeDelta * 10
                             val cpuMillis = cpuTimeDelta * 10
                             
-                            // CPU 使用率 = (CPU 時間 / 實際時間) * 100
+                            // CPU usage = (CPU time / elapsed time) * 100
                             val cpuUsage = (cpuMillis.toDouble() / wallTimeDelta * 100).toFloat()
                             
-                            // 限制在合理範圍內（考慮多核心，最大可能超過100%）
+                            // Limit to reasonable range (considering multi-core, max can exceed 100%)
                             val cpuCores = Runtime.getRuntime().availableProcessors()
                             val normalizedUsage = cpuUsage.coerceIn(0f, cpuCores * 100f)
                             statsRepository.updateCpuUsage(normalizedUsage)
@@ -260,10 +260,10 @@ class MiningWorker @AssistedInject constructor(
                     lastWallTime = currentWallTime
                 } else {
                     Timber.w("Cannot read /proc/$pid/stat, CPU monitoring disabled")
-                    return // 如果無法讀取，就停止監控
+                    return // If unable to read, stop monitoring
                 }
                 
-                // 每 5 秒更新一次
+                // Update every 5 seconds
                 delay(5000)
             } catch (e: Exception) {
                 Timber.e(e, "Error monitoring CPU usage")
