@@ -70,9 +70,9 @@ class MiningViewModel @Inject constructor(
             
             if (!config.isValid()) {
                 val errorMsg = when {
-                    config.walletAddress.isBlank() -> "配置無效：錢包地址未設置"
-                    config.poolUrl.isBlank() -> "配置無效：礦池地址未設置"
-                    else -> "配置無效，請檢查設置"
+                    config.walletAddress.isBlank() -> "Invalid configuration: wallet address not set"
+                    config.poolUrl.isBlank() -> "Invalid configuration: pool URL not set"
+                    else -> "Invalid configuration, please check settings"
                 }
                 Timber.w(errorMsg)
                 _uiState.update { it.copy(error = errorMsg) }
@@ -126,12 +126,12 @@ class MiningViewModel @Inject constructor(
                 
 
                 
-                _effects.send(MiningEffect.ShowToast("挖礦已啟動"))
+                _effects.send(MiningEffect.ShowToast("Mining started"))
                 
             } catch (e: Exception) {
                 Timber.e(e, "Failed to start mining")
-                _uiState.update { it.copy(error = "啟動失敗: ${e.message}") }
-                _effects.send(MiningEffect.ShowToast("啟動失敗"))
+                _uiState.update { it.copy(error = "Start failed: ${e.message}") }
+                _effects.send(MiningEffect.ShowToast("Start failed"))
             } finally {
                 _uiState.update { it.copy(isLoading = false) }
             }
@@ -149,11 +149,11 @@ class MiningViewModel @Inject constructor(
                 statsRepository.reset()
                 
                 Timber.i("Mining and monitoring stopped")
-                _effects.send(MiningEffect.ShowToast("挖礦已停止"))
+                _effects.send(MiningEffect.ShowToast("Mining stopped"))
                 
             } catch (e: Exception) {
                 Timber.e(e, "Failed to stop mining")
-                _uiState.update { it.copy(error = "停止失敗: ${e.message}") }
+                _uiState.update { it.copy(error = "Stop failed: ${e.message}") }
             } finally {
                 _uiState.update { it.copy(isLoading = false) }
             }
