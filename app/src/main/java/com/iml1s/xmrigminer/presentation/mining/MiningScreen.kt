@@ -69,7 +69,7 @@ fun MiningScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // 錯誤提示
+            // Error notification
             AnimatedVisibility(
                 visible = uiState.error != null,
                 enter = fadeIn() + expandVertically(),
@@ -81,13 +81,13 @@ fun MiningScreen(
                 )
             }
 
-            // 狀態卡片
+            // Status card
             StatusCard(
                 isRunning = uiState.isRunning,
                 stats = uiState.stats
             )
 
-            // 控制按鈕
+            // Control buttons
             ControlButtons(
                 isRunning = uiState.isRunning,
                 isLoading = uiState.isLoading,
@@ -95,10 +95,10 @@ fun MiningScreen(
                 onStopClick = { viewModel.onEvent(MiningEvent.StopMining) }
             )
 
-            // 詳細統計
+            // Detailed statistics
             StatsDetailCard(stats = uiState.stats)
 
-            // CPU 資訊
+            // CPU information
             CpuInfoCard()
         }
     }
@@ -140,7 +140,7 @@ fun ErrorCard(
             IconButton(onClick = onDismiss) {
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = "關閉",
+                    contentDescription = "Close",
                     tint = MaterialTheme.colorScheme.onErrorContainer
                 )
             }
@@ -172,7 +172,7 @@ fun StatusCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (isRunning) "🟢 挖礦中" else "⚪ 已停止",
+                    text = if (isRunning) "🟢 Mining" else "⚪ Stopped",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -186,23 +186,23 @@ fun StatusCard(
 
             Spacer(Modifier.height(16.dp))
 
-            // 算力
+            // Hashrate
             StatRow(
-                label = "算力",
-                value = if (isRunning && stats.hashrate == 0.0) "計算中..." else "%.2f H/s".format(stats.hashrate),
+                label = "Hashrate",
+                value = if (isRunning && stats.hashrate == 0.0) "Calculating..." else "%.2f H/s".format(stats.hashrate),
                 icon = Icons.Default.Speed
             )
 
             // Shares
             StatRow(
-                label = "接受/拒絕",
+                label = "Accepted/Rejected",
                 value = "${stats.acceptedShares} / ${stats.rejectedShares}",
                 icon = Icons.Default.CheckCircle
             )
 
-            // 成功率
+            // Success rate
             StatRow(
-                label = "成功率",
+                label = "Success Rate",
                 value = if (stats.acceptedShares + stats.rejectedShares == 0) 
                     "0.0%" 
                 else 
@@ -210,34 +210,34 @@ fun StatusCard(
                 icon = Icons.Default.TrendingUp
             )
 
-            // 難度
+            // Difficulty
             StatRow(
-                label = "難度",
+                label = "Difficulty",
                 value = if (stats.difficulty == 0L) "-" else stats.difficulty.toString(),
                 icon = Icons.Default.GridOn
             )
 
-            // 溫度
+            // Temperature
             StatRow(
-                label = "溫度",
+                label = "Temperature",
                 value = if (stats.temperature > 0) "%.1f°C".format(stats.temperature) else "-",
                 icon = Icons.Default.Thermostat
             )
 
-            // CPU 使用率
+            // CPU usage
             StatRow(
-                label = "CPU 使用率",
+                label = "CPU Usage",
                 value = when {
                     stats.cpuUsage > 0f -> "${stats.cpuUsage.roundToInt()}%"
-                    isRunning -> "計算中..."
+                    isRunning -> "Calculating..."
                     else -> "-"
                 },
                 icon = Icons.Default.Memory
             )
 
-            // 電量
+            // Battery
             StatRow(
-                label = "電量",
+                label = "Battery",
                 value = "${stats.batteryLevel}% ${if (stats.isCharging) "⚡" else ""}",
                 icon = if (stats.isCharging) Icons.Default.BatteryChargingFull else Icons.Default.BatteryStd
             )
@@ -311,7 +311,7 @@ fun ControlButtons(
                 Icon(Icons.Default.PlayArrow, contentDescription = null)
             }
             Spacer(Modifier.width(8.dp))
-            Text("開始挖礦")
+            Text("Start Mining")
         }
 
         Button(
@@ -332,7 +332,7 @@ fun ControlButtons(
                 Icon(Icons.Default.Stop, contentDescription = null)
             }
             Spacer(Modifier.width(8.dp))
-            Text("停止挖礦")
+            Text("Stop Mining")
         }
     }
 }
@@ -348,21 +348,21 @@ fun StatsDetailCard(
                 .padding(16.dp)
         ) {
             Text(
-                text = "詳細統計",
+                text = "Detailed Statistics",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
 
             Spacer(Modifier.height(12.dp))
 
-            DetailRow("CPU 使用率", when {
+            DetailRow("CPU Usage", when {
                 stats.cpuUsage > 0f -> "${stats.cpuUsage.roundToInt()}%"
                 else -> "-"
             })
-            DetailRow("難度", if (stats.difficulty == 0L) "-" else stats.difficulty.toString())
-            DetailRow("算力 (10s)", if (stats.hashrate10s > 0) "%.2f H/s".format(stats.hashrate10s) else "-")
-            DetailRow("算力 (60s)", if (stats.hashrate60s > 0) "%.2f H/s".format(stats.hashrate60s) else "-")
-            DetailRow("算力 (15m)", if (stats.hashrate15m > 0) "%.2f H/s".format(stats.hashrate15m) else "-")
+            DetailRow("Difficulty", if (stats.difficulty == 0L) "-" else stats.difficulty.toString())
+            DetailRow("Hashrate (10s)", if (stats.hashrate10s > 0) "%.2f H/s".format(stats.hashrate10s) else "-")
+            DetailRow("Hashrate (60s)", if (stats.hashrate60s > 0) "%.2f H/s".format(stats.hashrate60s) else "-")
+            DetailRow("Hashrate (15m)", if (stats.hashrate15m > 0) "%.2f H/s".format(stats.hashrate15m) else "-")
         }
     }
 }
@@ -396,7 +396,7 @@ fun CpuInfoCard() {
                 .padding(16.dp)
         ) {
             Text(
-                text = "CPU 資訊",
+                text = "CPU Info",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -407,7 +407,7 @@ fun CpuInfoCard() {
                 try {
                     com.iml1s.xmrigminer.native.XMRigBridge.getCpuInfo()
                 } catch (e: Exception) {
-                    "無法獲取 CPU 資訊"
+                    "Unable to retrieve CPU info"
                 }
             }
 
